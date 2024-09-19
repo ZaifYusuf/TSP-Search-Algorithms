@@ -176,7 +176,63 @@ def A_MST(adjacency_matrix):
             # Add the new path to the priority queue
             heapq.heappush(priority_queue, (f_new, g_new, next_node, path + [next_node]))
     
-    return best_solution, best_cost        
+    return best_solution, best_cost
+
+# Function to calculate the total cost of a given route based on the adjacency matrix
+def calculate_route_cost(route, adj_matrix):
+    total_cost = 0
+    num_cities = len(route)
+    for i in range(num_cities - 1):
+        total_cost += adj_matrix[route[i]][route[i + 1]]
+    # Add cost to return to the starting city to make the cycle complete
+    total_cost += adj_matrix[route[-1]][route[0]]
+    return total_cost
+
+# Function to generate neighbors by swapping two cities
+def generate_neighbors(route):
+    neighbors = []
+    # Exclude first city to keep the cycle valid
+    for i in range(1, len(route) - 1):
+        for j in range(i + 1, len(route)):
+            neighbor = route[:]
+            # Swap two cities
+            neighbor[i], neighbor[j] = neighbor[j], neighbor[i]
+            neighbors.append(neighbor)
+    return neighbors
+
+# Hill Climbing algorithm
+def hillClimbing(adj_matrix):
+    # Generate an initial random solution (route)
+    num_cities = len(adj_matrix)
+    current_solution = list(range(num_cities))
+    random.shuffle(current_solution)
+    
+    # Calculate the cost of the current solution
+    current_cost = calculate_route_cost(current_solution, adj_matrix)
+    
+    while True:
+        # Generate all neighbors (swap two cities)
+        neighbors = generate_neighbors(current_solution)
+        
+        # Find the best neighbor
+        best_neighbor = None
+        best_neighbor_cost = float('inf')
+        
+        for neighbor in neighbors:
+            neighbor_cost = calculate_route_cost(neighbor, adj_matrix)
+            if neighbor_cost < best_neighbor_cost:
+                best_neighbor = neighbor
+                best_neighbor_cost = neighbor_cost
+        
+        # If no neighbor is better, return the current solution
+        if best_neighbor_cost >= current_cost:
+            break
+        
+        # Move to the best neighbor
+        current_solution = best_neighbor
+        current_cost = best_neighbor_cost
+    
+    return current_solution + [current_solution[0]], current_cost        
 
 
 
@@ -201,6 +257,7 @@ def main():
     print(NN2O(matrix))
     print(RNN(matrix, 25, 3))
     print(A_MST(matrix))
+    print(hillClimbing(matrix))
    
 
 if __name__ == "__main__":
