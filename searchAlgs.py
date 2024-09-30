@@ -4,6 +4,7 @@ import random
 import heapq
 import networkx as nx
 import numpy as np
+import math
 
 def turn_txt_into_2d_matrix(filename):
     with open(filename, 'r') as file:
@@ -234,7 +235,61 @@ def hillClimbing(adj_matrix):
     
     return current_solution + [current_solution[0]], current_cost        
 
+def simulatedAnnealing(adj_matrix, initial_temp=1000, alpha=0.99, stopping_temp=1e-8, stopping_iter=1000):
+    # Get number of cities
+    n = len(adj_matrix)
 
+    # Generate an initial random solution (tour)
+    def random_solution():
+        return random.sample(range(n), n)
+    
+    # Calculate the total distance of a solution
+    def calculate_distance(tour):
+        return sum(adj_matrix[tour[i]][tour[(i + 1) % n]] for i in range(n))
+    
+    # Get a neighboring solution by swapping two cities
+    def get_neighbor(solution):
+        neighbor = solution[:]
+        i, j = random.sample(range(n), 2)
+        neighbor[i], neighbor[j] = neighbor[j], neighbor[i]
+        return neighbor
+
+    # Acceptance probability
+    def acceptance_probability(current_dist, neighbor_dist, T):
+        if neighbor_dist < current_dist:
+            return 1.0
+        else:
+            return math.exp((current_dist - neighbor_dist) / T)
+
+    # Initialize current solution and best solution
+    current_solution = random_solution()
+    best_solution = current_solution[:]
+    current_distance = calculate_distance(current_solution)
+    best_distance = current_distance
+
+    T = initial_temp
+    iter = 0
+
+    while T > stopping_temp and iter < stopping_iter:
+        # Get a random neighbor
+        neighbor = get_neighbor(current_solution)
+        neighbor_distance = calculate_distance(neighbor)
+
+        # Determine whether to accept the neighbor
+        if acceptance_probability(current_distance, neighbor_distance, T) > random.random():
+            current_solution = neighbor
+            current_distance = neighbor_distance
+
+        # Update best solution
+        if current_distance < best_distance:
+            best_solution = current_solution[:]
+            best_distance = current_distance
+
+        # Cool down the temperature
+        T *= alpha
+        iter += 1
+
+    return best_solution, best_distance
 
 
 def main():
@@ -258,6 +313,7 @@ def main():
     print(RNN(matrix, 25, 3))
     print(A_MST(matrix))
     print(hillClimbing(matrix))
+    simulatedAnnealing(matrix)
    
 
 if __name__ == "__main__":
